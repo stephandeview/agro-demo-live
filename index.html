@@ -733,7 +733,7 @@ body {
                   <div class="ai-block-text"><h4>Smart Operator</h4><p>Авто-генерація КП за 2 хвилини</p></div>
                   <div class="ai-block-badge badge-c">Block C</div>
                 </div>
-                <div class="ai-block-card" onclick="navTo('screen-a')">
+                <div class="ai-block-card" onclick="openCatalogScan()">
                   <div class="ai-block-icon icon-a">📷</div>
                   <div class="ai-block-text"><h4>Agro-Vision</h4><p>Діагностика культур за фото</p></div>
                   <div class="ai-block-badge badge-a">Block A</div>
@@ -994,7 +994,7 @@ body {
               </div>
               <div class="header-sub">AI-діагностика · 20k SKU · Рецепт за 5 сек</div>
             </div>
-            <div class="camera-area" id="camera-box" onclick="startScan()">
+            <div class="camera-area" id="camera-box" onclick="openCatalogScan()">
               <img class="crop-photo" id="crop-photo" src="" alt=""/>
               <div class="camera-overlay" id="camera-overlay">
                 <div class="camera-corners"></div>
@@ -1623,14 +1623,25 @@ function openCatalogScan() {
   const video = document.getElementById('cam-video');
   video.style.display = 'block';
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+    // Try rear camera first (mobile), fall back to any camera (laptop)
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
       .then(stream => {
         camStream = stream;
+        video.style.display = 'block';
         video.srcObject = stream;
       })
       .catch(() => {
-        // camera denied — just show dark viewfinder, samples still work
-        video.style.display = 'none';
+        // rear cam failed — try any camera (laptop front cam)
+        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+          .then(stream => {
+            camStream = stream;
+            video.style.display = 'block';
+            video.srcObject = stream;
+          })
+          .catch(() => {
+            // no camera at all — dark viewfinder, samples still work
+            video.style.display = 'none';
+          });
       });
   } else {
     video.style.display = 'none';
